@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.product.mapper.ProductMapper">
+<select id = "queryTotal" resultType = "Integer">
+	select count(product_id) from product
+</select>
+<select id = "querycatTotal" resultType = "Integer" parameterType="String">
+	select count(product_id) from product where product_category = #{productCategory}
+</select>
+<select id = "queryTotalsearch" resultType = "Integer">
+	select count(product_id) from product where product_category = #{productCategory} and 
+	product_price between  #{productNum} and #{productSoldnum}
+</select>
+<select id = "queryByPage" resultType="Product">
+	select * from product limit #{start},#{rows}
+</select>
+<select id = "catqueryByPage" resultType="Product">
+	select * from product where product_category = #{productCategory} limit #{start},#{rows}
+</select>
+<!-- 商品搜索 -->
+<select id = "productsearch" resultType="Product">
+	select * from product where product_name like '%${query}%' or product_category like '%${query}%' limit #{start},#{rows}
+</select>
+<select id = "productsearchtotal" resultType = "Integer" parameterType="String">
+	select count(product_id) from product where product_name like '%${query}%' or product_category like '%${query}%'
+</select>
+
+<select id = "queryByPagesearch" resultType="Product">
+	select * from product where  product_category = #{productCategory} and 
+	product_price between  #{productNum} and #{productSoldnum} limit #{start},#{rows}
+</select>
+<select id = "queryById" parameterType="String" resultType="Product">
+	select * from product where product_id = #{prodId} 
+</select>
+<insert id="productSave" parameterType="product">
+	insert into product(product_id,product_name,product_category,
+		product_num,product_imgurl,product_price,product_description)
+	values(#{productId},#{productName},#{productCategory},#{productNum},
+		#{productImgurl},#{productPrice},#{productDescription})
+</insert>
+<update id = "productUpdate" parameterType="Product">
+	update product set
+	product_name=#{productName},
+	product_category=#{productCategory},
+	product_num=#{productNum},
+	product_price=#{productPrice},
+	product_description=#{productDescription},
+	product_imgurl=#{productImgurl}
+	where product_id=#{productId};
+</update>
+<update id = "productUpdatecategory" parameterType="Product">
+	update product set product_category=#{productName}
+	where product_category=#{productCategory};
+</update>
+<update id = "productDelete" parameterType="String">
+	delete  from product where product_id=#{ids};
+</update>
+<update id = "productInstock" parameterType="String">
+	update product set product_status = 0 where product_id = #{ids};
+</update>
+<update id = "productReshelf" parameterType="String">
+	update product set product_status = 1 where product_id = #{ids};
+</update>
+</mapper>

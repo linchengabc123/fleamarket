@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.order.mapper.OrderMapper">
+
+	<insert id="orderSave"  parameterType="Order">
+		insert into orders( order_id, order_money, order_receiverinfo,
+		order_time,user_id,order_paystate)
+		values(#{orderId},#{orderMoney},#{orderReceiverinfo},
+		#{orderTime},#{userId},1)
+	</insert>
+	
+	<update id = "ordersh" parameterType="String">
+		update orders set order_paystate = 3 where order_id = #{orderId}
+	</update>
+	
+	<update id = "orderdelete" parameterType="String">
+		update orders set deleted = 1 where order_id = #{orderId}
+	</update>
+	
+	<insert id="orderItemSave"  parameterType="OrderItem">
+		insert into orderitem( order_id, product_id, buynum)
+		values(#{orderId},#{productId},#{num})
+	</insert>
+	
+	<select id="orderQuery" resultType="Order" >
+		select order_id as orderId,order_money as orderMoney,order_receiverinfo as orderReceiverinfo,
+		order_paystate as orderPaystate,order_time as orderTime,user_id as userId,deleted as deleted
+		from orders
+		where user_id=#{userId} and deleted = 0;
+	</select>
+	
+	<select id="getItem" resultType="OrderItem"  parameterType="String">
+		select orderitem.product_id as productId,product_name as productName,product_imgurl as productImage,product_price as productPrice,buynum as num
+		from orderitem,product
+		where order_id=#{id} and orderitem.product_id=product.product_id
+	</select>
+	
+
+
+</mapper>

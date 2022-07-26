@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.admin.mapper.AdminMapper">
+<select id = "queryTotal" resultType = "Integer">
+	select count(order_id) from orders
+</select>
+<select id = "queryByPage" resultType="Order">
+	select * from orders limit #{start},#{rows}
+</select>
+
+<select id = "orderDetailQuery" parameterType="String" resultType="OrderItem">
+	select order_paystate,order_receiverinfo,user_id as id,
+	orders.order_id,buynum as num,orderitem.product_id,
+	product_imgurl as product_image,product_name,
+	product_price from orderitem 
+	left join product on orderitem.product_id = product.product_id  
+	left join orders on orderitem.order_id = orders.order_id 
+	where orderitem.order_id=#{orderId};
+</select>
+
+<update id = "orderSendQuery" parameterType="String">
+	update orders set order_paystate = 2 where order_id = #{orderId};
+</update>
+
+
+</mapper>
