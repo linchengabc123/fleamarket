@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" > 
+<mapper namespace="cn.edu.scnu.mapper.CartMapper">  
+	
+	<insert id="addcart">
+		insert into cart(cart_uid,cart_pid,cart_num) values(#{userId},#{productId},#{num});
+	</insert>
+	
+	<select id="cartquery" resultType="Cart">
+		select cart_id as id,cart_uid as userId,cart_pid as productId,
+		product_imgurl as productImage,product_name as productName,product_price as productPrice,cart_num as num
+		from cart,product
+		where cart_uid=#{userId} and cart_pid=product_id;
+	</select>
+	
+	<delete id="cartdelete">
+		delete from cart where cart_pid=#{productId} and cart_uid=#{userId};
+	</delete>
+	
+	<update id="cartUpdate">
+		update cart set cart_num=#{num} where cart_uid=#{userId} and cart_pid=#{productId};
+	</update>
+	
+	<select id="querynumByupid" resultType="String">
+		select 
+			(case
+				when cart_num is null then 0
+				else cart_num
+			end) as num
+		from cart
+		where
+			cart_uid=#{userId} and cart_pid=#{productId};
+	</select>
+	
+<!-- 	<select id="getbyid" parameterType="String" resultType="Cart">
+		select cart_id as id,cart_uid as userId,cart_pid as productId,
+		product_imgurl as productImage,product_name as productName,product_price as productPrice,cart_num as num
+		from cart,product
+		where cart_uid=#{userId} and cart_pid in (#{proid});
+</select> -->
+
+<select id="getbyid" resultType="Cart">
+		select cart_id as id,cart_uid as userId,cart_pid as productId,
+		product_imgurl as productImage,product_name as productName,product_price as productPrice,cart_num as num
+		from cart,product
+		where cart_uid=#{userId} and cart_pid in (${proid}) and cart_pid=product_id;
+</select>
+
+	
+	
+</mapper>

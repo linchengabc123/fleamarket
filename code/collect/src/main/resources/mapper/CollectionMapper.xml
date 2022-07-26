@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.collect.mapper.CollectionMapper">
+	<delete id="delCollection">
+		delete from collect where product_id=#{productId} and user_id=#{userId}
+	</delete>
+	<insert id="addCollection">
+		<!-- insert into collect set product_id=#{productId},user_id=#{userId} -->
+		insert into collect values(#{userId},#{productId})
+	</insert>
+	<select id="checkCollection" resultType="Integer">
+			select user_id from collect
+			where product_id = #{productId} and user_id=#{userId}	
+	</select>
+	
+	<select id="queryByPage" parameterType="String" resultType="Product">
+		select * from product 
+		where product_id in 
+		(select product_id from collect where user_id = #{userId});
+	</select>
+</mapper>
