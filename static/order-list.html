@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Title</title>
+    <link href="js/kindeditor-4.1.10/themes/default/default.css" type="text/css" rel="stylesheet">
+    <script type="text/javascript" charset="utf-8" src="js/kindeditor-4.1.10/kindeditor-all-min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/kindeditor-4.1.10/lang/zh_CN.js"></script>
+    <link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.4.1/themes/default/easyui.css" />
+    <link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.4.1/themes/icon.css" />
+    <link rel="stylesheet" type="text/css" href="css/jt.css" />
+    <script type="text/javascript" src="js/jquery-easyui-1.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="js/jquery-easyui-1.4.1/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="js/jquery-easyui-1.4.1/locale/easyui-lang-zh_CN.js"></script>
+    <!-- 自己实现业务逻辑 -->
+    <script type="text/javascript" src="js/common.js"></script>
+
+</head>
+<body>
+<table class="easyui-datagrid" id="orderList" title="订单列表"
+       data-options="singleSelect:false,collapsible:true,pagination:true,
+       url:'http://www.fleamarket.com/admin/orderManage',method:'get',pageSize:20,toolbar:toolbar">
+    <thead>
+    <tr>
+        <th data-options="field:'ck',checkbox:true"></th>
+        <th data-options="field:'orderId',width:100">订单ID</th>
+        <th data-options="field:'orderReceiverinfo',width:250">收货地址</th>
+        <th data-options="field:'userId',width:100">用户ID</th>
+        <th data-options="field:'orderTime',width:150">订单提交时间</th>
+        <th data-options="field:'orderMoney',width:80">订单金额</th>
+        <th data-options="field:'orderPaystate',width:100">订单状态</th>
+		<th data-options="field:'deleted',width:100">是否删除</th>
+        
+        
+        
+    </tr>
+    </thead>
+</table>
+<div id="itemEditWindow" class="easyui-window" title="编辑商品" data-options="modal:true,closed:true,iconCls:'icon-save',href:'./item-edit.html'" style="width:80%;height:80%;padding:10px;">
+</div>
+<script>
+	var num = 0;
+    function getSelectionsIds(){
+        var itemList = $("#orderList");
+        var sels = itemList.datagrid("getSelections");
+        var ids = [];
+        for(var i in sels){
+	        console.log(sels[i].orderPaystate);
+            ids.push(sels[i].orderId);
+            
+        }
+        ids = ids.join(",");
+        return ids;//["200","300","400"]
+    }
+    function countcount(){
+        var itemList = $("#orderList");
+        var sels = itemList.datagrid("getSelections");
+        for(var i in sels){
+	        num++;
+        }
+    }
+
+    var toolbar = [{
+        text:'订单详情页',
+        iconCls:'icon-remove',
+        handler:function(){
+	        countcount();
+            //alert(num);
+            if(num == 0){
+                $.messager.alert('提示','请选中一个需要查看的订单!');
+				num = 0;
+                return ;
+            }
+            if(num > 1){
+                $.messager.alert('提示','每次只能查看一个订单详情!');
+                num = 0;
+                return ;
+            }
+            num = 0;
+            var itemList = $("#orderList");
+        	var sels = itemList.datagrid("getSelections");
+            console.log(sels[0].orderId);
+	        window.location.href="http://www.fleamarket.com/order-detail.html?orderId=" + sels[0].orderId;
+            
+        }
+     }
+    //  ,{
+    //     text:'未发货订单',
+    //     iconCls:'icon-remove',
+    //     handler:function(){
+    //         $(".tree-title:contains('新增商品')").parent().click();
+    //     }
+    // },{
+    //     text:'已发货订单',
+    //     iconCls:'icon-remove',
+    //     handler:function(){
+    //         $.ajax({
+    //                 url:"http://www.fleamarket.com/admin/orderManage",
+    //                 dataType:"json",
+    //                 type:"GET",
+    //                 success:function (data) {
+    //                     if(data.status==200){
+    //                         //window.location.href="http://www.fleamarket.com/mycart.html";
+    //                         $.messager.alert('提示','发货成功!');
+    //                     }else{
+    //                         alert("发货失败");
+    //                     }
+    //                 },
+    //                 error:function () {
+    //                     alert("发货请求发送失败");
+    //                 }
+    //             });
+    //     }
+    // }
+    ,{
+        text:'发货',
+        iconCls:'icon-edit',
+        handler:function(){
+            var ids = getSelectionsIds();
+            if(ids.length == 0){
+                $.messager.alert('提示','至少选中一个订单才能发货!');
+                return ;
+            }
+            var itemList = $("#orderList");
+        	var sels = itemList.datagrid("getSelections");
+            //console.log(sels[0].orderPaystate);
+            for(var i in sels){
+				if(sels[i].orderPaystate == 0){
+	                $.messager.alert('提示','你选中的订单中有部分尚未付款，请等待用户付款后再发货!');
+	                return ;
+	            }
+	            else if(sels[i].orderPaystate == 2){
+		            $.messager.alert('提示','你选中的订单中有部分已发货，请勿重复发货!');
+	                return ;
+	            }
+	        }
+	        
+         //   for(var i in ids){
+		       // if(ids[i].orderReceiverinfo == "已发货")
+		       // 	continue;
+		       // else
+		       // 	$.messager.alert('提示','发货成功!');
+        	//}
+			console.log("上界");
+             $.ajax({
+                    url:"http://www.fleamarket.com/admin/send?orderId="+sels[0].orderId,
+                    dataType:"json",
+                    type:"GET",
+                    success:function (data) {
+                        if(data.status==200){
+                            //window.location.href="http://www.fleamarket.com/mycart.html";
+                            
+                            $.messager.alert('提示','发货成功!');
+                        }else{
+                            alert("发货失败");
+                        }
+                    },
+                    error:function () {
+                        alert("发货请求发送失败");
+                    }
+                });
+                $("#orderList").datagrid("reload");
+                console.log("界");
+                
+            //$.messager.alert('提示','发货成功!');
+        }
+    }];
+</script>
+</body>
+</html>

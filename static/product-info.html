@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        .divcss5{ border:1px solid #F00; width:200px; height:100px}
+    </style>
+    <link rel="stylesheet" href="css/foot.css"/>
+    <link rel="stylesheet" href="css/head.css"/>
+    <meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+    <script type="text/javascript" src="js/base-v1.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jquery-1.2.6.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/cookie.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/common.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jquery.cookie.js" charset="utf-8"></script>
+    <script type="text/javascript" src="s/base-2011.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jquery.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jquery-extend.js"></script>
+    <script type="text/javascript" src="js/lib-v1.js" charset="utf-8"></script>
+    <link href="css/prodList.css" rel="stylesheet" type="text/css">
+    <link href="css/prodInfo.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="js/logout.js"></script>
+    <script type="text/javascript" src="js/productinfo.js"></script>
+    <meta charset="UTF-8">
+    <title>商品分页</title>
+    <script type="text/javascript">
+        var userId="";
+        var productId="";
+        window.onload=function(){
+		
+		
+
+            var localUrl=decodeURI(window.location.href);
+            //alert(localUrl);
+            productId=localUrl.split("?")[1].split("=")[1];
+            $.ajax({
+                url:"http://www.fleamarket.com/products/item/"+productId,
+                dataType:"json",
+                type:"POST",
+                success:function(data){
+                    //图片
+                    var imgUrl=data.productImgurl;
+                    productId=data.productId;
+                    document.getElementById("prod_img").src=imgUrl;
+                    document.getElementById("prod_name").innerText=data.productName;
+                    document.getElementById("prod_desc").innerText=data.productDescription;
+                    document.getElementById("prod_pric").innerText=data.productPrice;
+                    document.getElementById("prod_num").innerText=data.productNum;
+                }
+            });
+            var _ticket = $.cookie("EM_TICKET");
+            //alert(_ticket);
+            if(!_ticket){
+                return ;
+            }
+
+                //当dataType类型为jsonp时，jQuery就会自动在请求链接上增加一个callback的参数
+                $.ajax({
+                    url : "http://www.fleamarket.com/user/query/" + _ticket,
+                    dataType : "json",
+                    type : "GET",
+                    success : function(data){
+                        //alert("好啊2");
+                        if(data.status == 200){
+                            var _data = JSON.parse(data.data);//jackson
+                            var html =_data.userName+"，欢迎来到京淘！<a href=\"javascript:void(0)\" class=\"link-logout\" onclick='logout()'>[退出]</a>  \|<a href=\"http://www.fleamarket.com/manage.html\" class=\"link-logout\">[后台]</a>";
+                            userId=_data.userId;
+                            $("#loginbar").html(html);
+                        }
+							
+							$.ajax({
+				    url:"http://www.fleamarket.com/collect/checkCollection?productId="+productId+"&userId="+userId,
+				    dataType:"json",
+				    type:"GET",
+				    success:function (data){
+				        if(data.status==200){
+				           changeHeart();
+				       } 
+				 }
+			});
+			
+			
+                    },
+                    error : function(){
+                        alert('index error.');
+                    }
+                });
+				
+            }
+
+        function addCart(){
+            if(userId==""){
+                window.location.href="login.html";
+                return;
+            }
+            var num=document.getElementById("buyNumInp").value;
+            alert(num);
+            $.ajax({
+                url:"http://www.fleamarket.com/cart/save?userId="+userId+"&productId="+productId+"&num="+num,
+                dataType:"json",
+                type:"GET",
+                success:function (data){
+                    if(data.status==200){
+                        window.location.href="http://www.easymall.com/mycart.html?userId="+userId;
+                    }else{
+                        alert("新购物车失败");
+                    }
+                },
+                error:function () {
+                    alert("算了吧");
+                }
+            });
+        }
+        function search(a){
+            var query=document.getElementById(a).value;
+            //alert(query);
+            window.location.href="./search.html?query="+query;
+
+        }
+		function addCart(){
+            if(userId==""){
+                window.location.href="login.html";
+                return;
+            }
+            var num=document.getElementById("buyNumInp").value;
+            alert(num);
+            $.ajax({
+                url:"http://www.fleamarket.com/cart/save?userId="+userId+"&productId="+productId+"&num="+num,
+                dataType:"json",
+                type:"GET",
+                success:function (data){
+                    if(data.status==200){
+                        window.location.href="http://www.fleamarket.com/mycart.html?userId="+userId;
+                    }else{
+                        alert("新购物车失败");
+                    }
+                },
+                error:function () {
+                    alert("错误啦！");
+                }
+            });
+        }
+		function addfavorite(){
+            if(userId==""){
+                window.location.href="login.html";
+                return;
+            }
+            $.ajax({
+                url:"http://www.fleamarket.com/collect/addCollection?productId="+productId+"&userId="+userId,
+                dataType:"json",
+                type:"GET",
+                success:function (data){
+                    if(data.status==200){
+                        alert("收藏成功");
+                    }else{
+						cancelfavorite();
+                    }
+                },
+                error:function () {
+                    alert("收藏失败");
+                }
+            });
+        }
+		function cancelfavorite(){
+            if(userId==""){
+                window.location.href="login.html";
+                return;
+            }
+            $.ajax({
+                url:"http://www.fleamarket.com/collect/delCollection?productId="+productId+"&userId="+userId,
+                dataType:"json",
+                type:"GET",
+                success:function (data){
+                    if(data.status==200){
+					    cancelHeart();
+                        alert("取消收藏成功");
+                    }else{
+                        alert("取消收藏失败");
+                    }
+                },
+                error:function () {
+                    alert("失败");
+                }
+            });
+        }
+        function search(a){
+            var query=document.getElementById(a).value;
+            //alert(query);
+            window.location.href="./search.html?query="+query;
+
+        }
+    </script>
+</head>
+<body>
+<div id="common_head">
+    <div id="line1">
+        <div id="content">
+            <li class="fore1" id="loginbar" clstag="homepage|keycount|home2013|01b">
+                <span id="head_span"\\\x><a href="./login.html">登录</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="./regist.html">注册</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="./manage.html">后台</a></span>
+
+            </li>
+        </div>
+    </div>
+    <div id="line2">
+        <img id="logo" src="img/head/logo.png"/>
+        <input type="text" value="" accesskey="s" id="key" autocomplete="off" onkeydown="javascript:if(event.keyCode==13) search('key');"/>
+        <input type="button" value="搜 索" onclick="search('key')"/>
+        <span id="goto">
+			<a id="goto_order" href="./myorder.html">我的订单</a>
+			<a id="goto_cart" href="./mycart.html">我的购物车</a>
+			<a id="goto_cart" href="./myfavorite.html">我的收藏</a>
+		</span>
+    </div>
+    <div id="line3">
+        <div id="content">
+            <ul>
+                <li><a href="/index.html">首页</a></li>
+                <li><a href="/product-list.html?page=1&rows=20">全部商品</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手平板电脑&page=1&rows=20">二手平板电脑</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手笔记本&page=1&rows=20">二手笔记本</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手笔记本配件&page=1&rows=20">二手笔记本配件</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手台式机&page=1&rows=20">二手台式机</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手服务器/工作站&page=1&rows=20">二手服务器</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手平板电脑配件&page=1&rows=20">二手平板配件</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手一体机&page=1&rows=20">二手一体机</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div id="warp">
+    <div id="left">
+        <div id="left_top">
+            <img src="" id="prod_img">
+        </div>
+        <div id="left_bottom">
+
+        </div>
+    </div>
+    <div id="right">
+        <div id="right_top">
+            <span id="prod_name"><br/></span>
+            <br>
+            <span id="prod_desc"><br/></span>
+        </div>
+        <div id="right_middle">
+				<span id="right_middle_span">
+                    二手价：<span class="price_red" id="prod_pric">1111</span>元<br/>
+			            运     费：满 100 免运费<br />
+			            服     务：由EasyMall负责发货，并提供售后服务<br />
+                    库存：<span id="prod_num">1111</span>件<br />
+			            购买数量：
+	            <a href="javascript:void(0)" id="delNum" onclick="change(-1)">-</a>
+	            <input id="buyNumInp" name="buyNum" type="text" value="1" />
+		        <a href="javascript:void(0)" id="addNum" onclick="change(1)">+</a>
+                </span>
+        </div>
+        <div id="right_bottom">
+			<div id="purchaseButton" >
+				<img style="float: left; margin: 10px 0px 0px 30px ; width: 30px;" src="img/prodInfo/cart.png" >
+				<input id="add_cart_but" type="button" value="购买商品" onclick="addCart()"/>
+            </div>
+			<div id="favButton" >
+				<img id="heart"  style="float: left; margin: 10px 0px 0px 25px ; width: 35px;" src="img/prodInfo/heartwp.png" >
+			<input id="add_favourite_but" type="button" value="收藏商品" onclick="addfavorite();changeHeart()"/>
+            </div>
+		</div>
+		 <script type="text/javascript">
+		 	function changeHeart(){
+				$('#heart').attr('src','img/prodInfo/heartp.png')
+			}
+			
+			function cancelHeart(){
+			    $('#heart').attr('src','img/prodInfo/heartwp.png')
+			}
+			
+		 </script>
+	
+    </div>
+</div>
+<div id="common_foot">
+    <p>
+        高级软件实作
+        <br>
+    </p>
+</div>
+</body>
+</html>

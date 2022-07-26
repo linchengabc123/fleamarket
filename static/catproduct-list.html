@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        .divcss5{ border:1px solid #F00; width:200px; height:100px}
+    </style>
+    <link rel="stylesheet" href="css/foot.css"/>
+    <link rel="stylesheet" href="css/head.css"/>
+    <meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+    <script type="text/javascript" src="js/base-v1.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jquery-1.2.6.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/cookie.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/common.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jquery.cookie.js" charset="utf-8"></script>
+    <script type="text/javascript" src="s/base-2011.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jquery.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/jquery-extend.js"></script>
+    <script type="text/javascript" src="js/logout.js"></script>
+    <script type="text/javascript" src="js/lib-v1.js" charset="utf-8"></script>
+    <link href="css/prodList.css" rel="stylesheet" type="text/css">
+	
+	
+    <script type="text/javascript" src="js/jquery-easyui-1.4.1/jquery.easyui.min.js"></script>
+    
+    <!-- 自己实现业务逻辑 -->
+    <script type="text/javascript" src="js/common.js"></script>
+    <meta charset="UTF-8">
+    <title>商品分页</title>
+    <script type="text/javascript">
+        var userId;
+		var itemEditEditor ;
+		var catnow="";
+        window.onload=function(){
+            queryUser();
+            var localUrl=decodeURI(window.location.href);
+            var queryPageParam=localUrl.substr(localUrl.lastIndexOf("?")+1);
+            queryPages(queryPageParam);
+            }
+			
+	
+			
+        function addCartOne(productId,userId){
+            if(productId==null){
+                alert("商品id错误");
+                return;
+            }
+            if(userId==""||userId==null){
+                window.location.href="./login.html";
+                return;
+            }
+            $.ajax({
+               url:"http://www.fleamarket.com/cart/save?productId="+productId+"&userId="+userId+"&num=1",
+               dataType:"json",
+               type:"GET",
+               success:function (data) {
+                    if(data.status==200){
+                        window.location.href="http://www.easymall.com/mycart.html";
+                    }
+                    else{
+                        alert("新增购物车失败");
+                    }
+               } ,
+               error:function () {
+                   alert("发送失败");
+               }
+
+            });
+        }
+       function queryUser(){
+
+            var _ticket = $.cookie("EM_TICKET");
+            if(!_ticket){
+                return ;
+            }
+            //当dataType类型为jsonp时，jQuery就会自动在请求链接上增加一个callback的参数
+            $.ajax({
+                url : "http://www.fleamarket.com/user/query/" + _ticket,
+                dataType : "json",
+                type : "GET",
+                success : function(data){
+                    //alert("好啊2");
+                    if(data.status == 200){
+                        var _data = JSON.parse(data.data);//jackson
+                        var html =_data.userName+"，欢迎来到EasyMall！<a href=\"javascript:void(0)\" class=\"link-logout\" onclick='logout()'>[退出]</a>  \|<a href=\"http://www.fleamarket.com/manage.html\" class=\"link-logout\">[后台]</a>";
+                        userId=_data.userId;
+
+                        $("#loginbar").html(html);
+                    }
+                },
+                error : function(){
+                    alert('index error.');
+                }
+            });
+        }
+        function queryPages(param){
+            var ticket=$.cookie("EM_TICKET");
+            var userId="";
+            $.get("http://www.fleamarket.com/user/query/"+ticket,function (data) {
+                if(data.status==200){
+                    var _data = JSON.parse(data.data);//jackson
+                    userId=_data.userId;
+                }
+            })
+            sleep(200);
+            //alert("等待当前页面加载userId");
+            $.ajax({
+                url:"http://www.fleamarket.com/products/catpageManage?"+param,
+                dataType:"json",
+                type:"POST",
+                success:function(data){
+                    // alert("好啊3");
+                    if(data.rows.length>0){
+
+                        $.each(data.rows,function(index, product){
+                            var product_html="product-info.html?productId="+product.productId;
+                            var productId=product.productId;
+                            $("#prod_content").append("<div id='prod_div'><a href="+product_html+"><img src='"+product.productImgurl+"'width=\"200px\" height=\"200px\"></img> </a><div id='prod_name_div'><a href="+product_html+">"+product.productName+"</a></div><div id='prod_price_div'>￥"+product.productPrice+"元</div><div><div id='gotocart_div'><a href='javascript:void(0)' onclick='addCartOne(\""+productId+"\",\""+userId+"\")'>加入购物车</a></div><div id='say_div'>库存"+product.productNum+"件</div></div></div>");
+                        })
+                    }
+					//alert("asd");
+					catnow=data.rows[0].productCategory;
+					//alert(catnow);
+				},
+                error : function(){
+                    alert("请求失败");
+                }
+            });
+        }
+        function search(a){
+            var query=document.getElementById(a).value;
+           // alert(query);
+            window.location.href="./search.html?query="+query;
+
+        }
+        function sleep(delay) {
+            var start = (new Date()).getTime();
+            while ((new Date()).getTime() - start < delay) {
+                continue;
+            }
+        }
+		
+		
+		
+	
+    $(function(){
+        //实例化编辑器
+        itemEditEditor = KindEditorUtil.createEditor("#itemeEditForm [name=desc]");
+    });
+
+    function submitForm(){
+        if(!$('#itemeEditForm').form('validate')){
+            alert('表单还未填写完成!');
+            
+        }
+		var pa=$("#itemeEditForm").serialize()+"&page=1&rows=30"
+		alert(pa)
+		queryPagessearch(pa);
+    }
+	
+	
+	function queryPagessearch(param){
+     
+            $.ajax({
+                url:"http://www.fleamarket.com/products/pageManagesearch?"+param,
+                dataType:"json",
+                type:"POST",
+                success:function(data){
+                    //alert("好啊3");
+					
+					
+                    if(data.rows.length>0){
+					//alert("进来了");
+					var element_div = document.getElementById("prod_content");
+							 element_div.innerHTML="";
+                        $.each(data.rows,function(index, product){
+                            var product_html="product-info.html?productId="+product.productId;
+                            var productId=product.productId;
+							console.log(product_html);
+							console.log(productId);
+							 
+                            $("#prod_content").append("<div id='prod_div'><a href="+product_html+"><img src='"+product.productImgurl+"'width=\"200px\" height=\"200px\"></img> </a><div id='prod_name_div'><a href="+product_html+">"+product.productName+"</a></div><div id='prod_price_div'>￥"+product.productPrice+"元</div><div><div id='gotocart_div'><a href='javascript:void(0)' onclick='addCartOne(\""+productId+"\",\""+userId+"\")'>加入购物车</a></div><div id='say_div'>库存"+product.productNum+"件</div></div></div>");
+                        })
+						alert("请求成功")
+                    }
+                },
+                error : function(){
+                    alert("请求失败");
+                }
+            });
+        }
+	function get(){
+		var pagg =jQuery("#in").val();
+		alert(pagg);		
+		window.location.href = "/catproduct-list.html?page="+pagg+"&rows=20&productCategory="+catnow;
+		var localUrl=decodeURI(window.location.href);
+		var queryPageParam=localUrl.substr(localUrl.lastIndexOf("?")+1);
+		alert(queryPageParam);
+	}
+	function before(){
+		var localUrl=decodeURI(window.location.href);
+		var queryPageParam=localUrl.substr(localUrl.lastIndexOf("&")-1,1)-1;
+		alert(queryPageParam);
+		var newurl=changeURLArg(localUrl,'page',queryPageParam);
+		window.location.href=newurl;
+		
+	}
+	function after(){
+		var localUrl=decodeURI(window.location.href);
+		var queryPageParam=localUrl.substr(localUrl.lastIndexOf("&")-1,1)-(-1);
+		alert(queryPageParam);
+		var newurl=changeURLArg(localUrl,'page',queryPageParam);
+		window.location.href=newurl;
+	}
+	//定义替换参数的方法
+	function changeURLArg(url,arg,arg_val){ 
+    var pattern=arg+'=([^&]*)'; 
+    var replaceText=arg+'='+arg_val; 
+    if(url.match(pattern)){ 
+        var tmp='/('+ arg+'=)([^&]*)/gi'; 
+        tmp=url.replace(eval(tmp),replaceText); 
+        return tmp; 
+    }else{ 
+        if(url.match('[\?]')){ 
+            return url+'&'+replaceText; 
+        }else{ 
+            return url+'?'+replaceText; 
+        } 
+    } 
+    return url+'\n'+arg+'\n'+arg_val; 
+}
+	function catpage(p,r){
+		//alert(catnow);
+		var thisurl=window.location.href;  
+		var newurl=changeURLArg(thisurl,'page',p);
+		window.location.href=newurl;
+		//alert(newurl);  
+	}
+	
+    </script>
+	<style type="text/css">
+	.ys{
+	    font: 12px/150% tahoma,arial,Microsoft YaHei,Hiragino Sans GB,"\u5b8b\u4f53",sans-serif;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    text-decoration: none;
+    float: left;
+    height: 36px;
+    line-height: 36px;
+    padding: 0 14px;
+    margin-right: 5px;
+    font-size: 14px;
+    color: #333;
+    border: 1px solid #ddd;
+    background-color: #f7f7f7;
+    background-repeat: repeat-x;
+	}
+	.p-num{
+	font: 12px/150% tahoma,arial,Microsoft YaHei,Hiragino Sans GB,"\u5b8b\u4f53",sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: #666;
+    margin: 0;
+ 
+	height:100px;
+	width:700px;
+   
+	}
+	.p-wrap{
+	height:100px;
+	font: 12px/150% tahoma,arial,Microsoft YaHei,Hiragino Sans GB,"\u5b8b\u4f53",sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: #666;
+   
+	
+	}
+	#prod_name_div{
+	 overflow: hidden;
+    text-overflow:ellipsis;
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:3;
+	}
+	#prod_price_div{
+	height:15px;
+	}
+	
+	</style>
+</head>
+
+
+<body>
+<div id="common_head">
+    <div id="line1">
+        <div id="content">
+            <li class="fore1" id="loginbar" clstag="homepage|keycount|home2013|01b">
+                <span id="head_span"\\\x><a href="login.html">登录</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="regist.html">注册</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="manage.html">后台</a></span>
+
+            </li>
+        </div>
+    </div>
+    <div id="line2">
+        <img id="logo" src="img/head/logo.png"/>
+        <input type="text" value="" accesskey="s" id="key" autocomplete="off" onkeydown="javascript:if(event.keyCode==13) search('key');"/>
+        <input type="button" value="搜 索" onclick="search('key')"/>
+        <span id="goto">
+			<a id="goto_order" href="myorder.html">我的订单</a>
+			<a id="goto_cart" href="mycart.html">我的购物车</a>
+			<a id="goto_cart" href="./myfavorite.html">我的收藏</a>
+		</span>
+        
+    </div>
+    <div id="line3">
+        <div id="content">
+            <ul>
+                <li><a  href="/index.html">>首页</a></li>
+                <li><a href="/product-list.html?page=1&rows=20">全部商品</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手平板电脑&page=1&rows=20">二手平板电脑</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手笔记本&page=1&rows=20">二手笔记本</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手笔记本配件&page=1&rows=20">二手笔记本配件</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手台式机&page=1&rows=20">二手台式机</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手服务器/工作站&page=1&rows=20">二手服务器</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手平板电脑配件&page=1&rows=20">二手平板配件</a></li>
+                <li><a href="/catproduct-list.html?productCategory=二手一体机&page=1&rows=20">二手一体机</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+<div id="content">
+		
+<div style="padding:10px 10px 10px 10px">
+    <form id="itemeEditForm" class="itemForm" method="post">
+        <input type="hidden" name="productId"/>
+        <table cellpadding="5">
+            <tr>
+                
+				<td>商品类目:</td>
+				<td>
+				<select type = "text" name = "productCategory" > 
+					<option value = "二手平板电脑">二手平板电脑</option>
+					<option value = "二手笔记本">二手笔记本</option>
+					
+					<option value = "二手笔记本配件">二手笔记本配件</option>
+					<option value = "二手台式机">二手台式机</option>
+					<option value = "二手服务器/工作站">二手服务器/工作站</option>
+					<option value = "二手平板电脑配件">二手平板电脑配件</option>
+					<option value = "二手一体机">二手一体机</option>
+				</select>
+                </td>
+				<td>自定义最低价:</td>
+                <td><input class="easyui-numberbox" type="text" name="productNum" style="width: 100px;"></input>
+                </td>
+            
+                <td>自定义最高价:</td>
+                <td><input class="easyui-numberbox" type="text" name="productSoldnum" data-options="min:1,max:99999999,precision:0,required:true" /></td>
+            </tr>
+        </table>
+    </form>
+    <div style="padding:5px">
+        <a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitForm()">查询</a>
+    </div>
+</div >
+    <div id="prod_content" style="height:1900px">
+    </div>
+	
+</div>
+<div>
+	<div style="background-color:yellow,bottom:0" class="p-wrap">
+	<center>
+	<div class="p-num">
+	<a onclick ="before()"  title="使用方向键左键也可翻到上一页哦！"><i>&lt;</i><em>上一页</em></a>
+	<a onclick="" class="ys">1</a>
+	<a onclick="catpage('2','20')" class="ys">2</a>
+	<a onclick="catpage('3','20')" class="ys">3</a>
+	<a onclick="catpage('4','20')" class="ys">4</a>
+	<a onclick="catpage('5','20')" class="ys">5</a>
+	<a onclick="catpage('6','20')" class="ys">6</a>
+	<a onclick="catpage('7','20')" class="ys">7</a>
+	<a onclick ="after()"  title="使用方向键右键也可翻到下一页哦！"><em>下一页</em><i>&gt;</i></a>
+	<input  type ="text" name = "in" id ="in" style=" height:25px"/>
+	<button onclick ="get()">确定</button>
+	</div>
+	</center>
+	</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
